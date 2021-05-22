@@ -49,7 +49,8 @@ The first step is to install some packages, by entering the following commands i
 pkgs = c(
   "pct",
   "stats19",
-  "osmextract"
+  "osmextract",
+  "tmap"
 )
 ```
 

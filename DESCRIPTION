@@ -18,6 +18,7 @@ Imports:
     osmextract,
     pct,
     sf,
-    stats19
+    stats19,
+    tmap
 Remotes:
     itsleeds/od
