@@ -46,6 +46,13 @@ pkgs = c(
 )
 ```
 
+You can install these packages as follows:
+
+```{r, eval=FALSE}
+install.packages(pkgs)
+```
+
+
 We will load the packages as we use them.
 
 # Zone data from the PCT
