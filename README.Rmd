@@ -100,7 +100,6 @@ sf::st_write(chorlton_buffer, "chorlton_buffer.geojson")
 ```
 
 
-
 # Zone data from the PCT
 
 ```{r}
@@ -110,6 +109,24 @@ names(zones)[1:20]
 names_to_plot = c("bicycle", "foot", "car_driver", "bus")
 plot(zones[names_to_plot] )
 ```
+
+To keep only zones whose centroids lie inside the study area we can use the following spatial subsetting code:
+
+```{r}
+zone_centroids = sf::st_centroid(zones)
+zone_centroids_chorlton = zone_centroids[chorlton_buffer, ]
+zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
+```
+
+Let's plot the result, to get a handle on the level of walking and cycling in the area:
+
+```{r}
+tm_shape(zones) +
+  tm_fill(c("foot", "bicycle"), palette = "viridis") +
+  tm_shape(chorlton_buffer) + tm_borders(lwd = 3)
+```
+
+
 
 # Desire line data from the PCT
 
