@@ -58,7 +58,9 @@ pkgs = c(
   "pct",
   "stats19",
   "osmextract",
-  "tmap"
+  "tmap",
+  "stplanr",
+  "od"
 )
 ```
 
@@ -68,9 +70,67 @@ You can install these packages as follows:
 install.packages(pkgs)
 ```
 
-We will load the packages as we use them.
+You can load these packages one-by-one with `library(pct)`, or all at
+once as follows:
+
+``` r
+lapply(pkgs, library, character.only = TRUE)[length(pkgs)]
+#> Data provided under OGL v3.0. Cite the source and link to:
+#> www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+#> Data (c) OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright.
+#> Check the package website, https://docs.ropensci.org/osmextract/, for more details.
+#> 
+#> Attaching package: 'od'
+#> The following objects are masked from 'package:stplanr':
+#> 
+#>     od_id_character, od_id_max_min, od_id_order, od_id_szudzik,
+#>     od_oneway, od_to_odmatrix, odmatrix_to_od
+#> [[1]]
+#>  [1] "od"         "stplanr"    "tmap"       "osmextract" "stats19"   
+#>  [6] "pct"        "sf"         "stats"      "graphics"   "grDevices" 
+#> [11] "utils"      "datasets"   "methods"    "base"
+```
+
+One final line of code to set-up the environment is to switch `tmap`
+into ‘view’ mode if you want to create interactive maps:
+
+``` r
+tmap_mode("view")
+#> tmap mode set to interactive viewing
+```
 
 # Defining the study area
+
+The first stage in many projects involving geographic data is defining
+the study area. This is not always a straightforward or objective
+process. In this case, the aim is to demonstrate how open data can be
+downloaded and visualised with a focus on Chorlton and with a view to
+getting the data into the transport simulation software A/B Street.
+
+We will therefore select an area containing Chorlton and enough of the
+surrounding area to enable modelling of trips to key destinations. As a
+starting point, we will use a 2 km buffer around the straight line
+between Chorlton and Manchester city centre to capture movement along
+this transport corridor:
+
+``` r
+chorlton_point = tmaptools::geocode_OSM("chorlton, manchester")
+manchester_point = tmaptools::geocode_OSM("manchester")
+c_m_coordiantes = rbind(chorlton_point$coords, manchester_point$coords)
+c_m_od = od::points_to_od(p = c_m_coordiantes, interzone_only = TRUE)
+c_m_desire_line = od::odc_to_sf(c_m_od[-(1:2)])[1, ]
+chorlton_buffer = stplanr::geo_buffer(c_m_desire_line, dist = 2000)
+```
+
+``` r
+qtm(chorlton_buffer)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)
+
+``` r
+sf::st_write(chorlton_buffer, "chorlton_buffer.geojson")
+```
 
 # Zone data from the PCT
 
@@ -89,7 +149,34 @@ names_to_plot = c("bicycle", "foot", "car_driver", "bus")
 plot(zones[names_to_plot] )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+To keep only zones whose centroids lie inside the study area we can use
+the following spatial subsetting code:
+
+``` r
+zone_centroids = sf::st_centroid(zones)
+#> Warning in st_centroid.sf(zones): st_centroid assumes attributes are constant
+#> over geometries of x
+#> Warning in st_centroid.sfc(st_geometry(x), of_largest_polygon =
+#> of_largest_polygon): st_centroid does not give correct centroids for longitude/
+#> latitude data
+zone_centroids_chorlton = zone_centroids[chorlton_buffer, ]
+#> although coordinates are longitude/latitude, st_intersects assumes that they are planar
+#> although coordinates are longitude/latitude, st_intersects assumes that they are planar
+zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
+```
+
+Let’s plot the result, to get a handle on the level of walking and
+cycling in the area:
+
+``` r
+tm_shape(zones) +
+  tm_fill(c("foot", "bicycle"), palette = "viridis") +
+  tm_shape(chorlton_buffer) + tm_borders(lwd = 3)
+```
+
+![](https://i.imgur.com/oEuv1Zj.png)
 
 # Desire line data from the PCT
 
