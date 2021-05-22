@@ -68,7 +68,7 @@ You can load these packages one-by-one with `library(pct)`, or all at once as fo
 lapply(pkgs, library, character.only = TRUE)[length(pkgs)]
 ```
 
-One final line of code to set-up the environment is to switch `tmap` into 'view' mode to create interactive maps:
+One final line of code to set-up the environment is to switch `tmap` into 'view' mode if you want to create interactive maps:
 
 ```{r}
 tmap_mode("view")
@@ -91,8 +91,15 @@ c_m_coordiantes = rbind(chorlton_point$coords, manchester_point$coords)
 c_m_od = od::points_to_od(p = c_m_coordiantes, interzone_only = TRUE)
 c_m_desire_line = od::odc_to_sf(c_m_od[-(1:2)])[1, ]
 chorlton_buffer = stplanr::geo_buffer(c_m_desire_line, dist = 2000)
+```
+
+```{r, eval=FALSE}
 qtm(chorlton_buffer)
 ```
+
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)
+
+
 
 ```{r, eval=FALSE}
 sf::st_write(chorlton_buffer, "chorlton_buffer.geojson")
