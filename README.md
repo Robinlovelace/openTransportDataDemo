@@ -3,13 +3,6 @@ zones to route networks
 ================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-
-``` r
-# Generate citations (requires Zotero)
-library(rbbt)
-bbt_write_bib(path = "references.bib", keys = bbt_detect_citations("README.Rmd"), overwrite = TRUE)
-```
-
 <!-- badges: start -->
 
 [![.github/workflows/render-rmarkdown.yaml](https://github.com/Robinlovelace/odjitter/actions/workflows/render-rmarkdown.yaml/badge.svg)](https://github.com/Robinlovelace/odjitter/actions/workflows/render-rmarkdown.yaml)
