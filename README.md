@@ -33,8 +33,25 @@ collaborative transport planning research.
 To reproduce the code in this repo you will need to have R installed
 and, most likely, an IDE for R such as RStudio (recommended unless you
 already have a favourite coding tool that has good support for R such as
-VSCode). You will also need to install some packages, e.g. by entering
-the following commands into the R console:
+VSCode).
+
+If you’re new to R, it may be worth reading up on introductory material
+such as the free and open source resource *Reproducible Road Safety with
+R* (**lovelace\_reproducible\_2020?**) tutorial. See [Section
+1.5](https://itsleeds.github.io/rrsrr/introduction.html#installing-r-and-rstudio)
+of that tutorial to install R/RStudio and [Section
+3](https://itsleeds.github.io/rrsrr/rstudio.html) on getting started
+with the powerful RStudio editor. A strength of R is the number of high
+quality and open access
+[tutorials](https://education.rstudio.com/learn/beginner/),
+[books](https://education.rstudio.com/learn/beginner/) and videos to get
+started.
+
+If you have R installed, you should be able to run all the code in this
+example and reproduce the results.
+
+The first step is to install some packages, by entering the following
+commands into the R console:
 
 ``` r
 pkgs = c(
