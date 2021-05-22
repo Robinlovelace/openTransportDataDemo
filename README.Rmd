@@ -50,7 +50,9 @@ pkgs = c(
   "pct",
   "stats19",
   "osmextract",
-  "tmap"
+  "tmap",
+  "stplanr",
+  "od"
 )
 ```
 
@@ -60,9 +62,32 @@ You can install these packages as follows:
 install.packages(pkgs)
 ```
 
-We will load the packages as we use them.
+You can load these packages one-by-one with `library(pct)`, or all at once as follows:
+
+```{r}
+lapply(pkgs, library, character.only = TRUE)[length(pkgs)]
+```
+
 
 # Defining the study area
+
+The first stage in many projects involving geographic data is defining the study area.
+This is not always a straightforward or objective process.
+In this case, the aim is to demonstrate how open data can be downloaded and visualised with a focus on Chorlton and with a view to getting the data into the transport simulation software A/B Street.
+
+We will therefore select an area containing Chorlton and enough of the surrounding area to enable modelling of trips to key destinations.
+As a starting point, we will use a 2 km buffer around the straight line between Chorlton and Manchester city centre to capture movement along this transport corridor:
+
+```{r}
+chorlton_point = tmaptools::geocode_OSM("chorlton")
+manchester_point = tmaptools::geocode_OSM("manchester")
+c_m_coordiantes = rbind(chorlton_point$coords, manchester_point$coords)
+c_m_od = od::points_to_od(p = c_m_coordiantes, interzone_only = TRUE)
+c_m_desire_line = od::odc_to_sf(c_m_od)[1, ]
+c_m_buffer = stplanr::geo_buffer(c_m_desire_line, dist = 2000)
+qtm(c_m_buffer)
+```
+
 
 # Zone data from the PCT
 

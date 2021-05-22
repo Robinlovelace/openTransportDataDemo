@@ -19,6 +19,7 @@ Imports:
     pct,
     sf,
     stats19,
+    stplanr,
     tmap
 Remotes:
     itsleeds/od
