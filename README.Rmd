@@ -52,7 +52,8 @@ pkgs = c(
   "osmextract",
   "tmap",
   "stplanr",
-  "od"
+  "od",
+  "dplyr"
 )
 ```
 
@@ -110,7 +111,8 @@ sf::st_write(chorlton_buffer, "chorlton_buffer.geojson")
 
 ```{r}
 head(pct::pct_regions$region_name)
-zones = pct::get_pct_zones("greater-manchester")
+# zones = pct::get_pct_zones("greater-manchester") # for smaller LSOA zones
+zones = pct::get_pct_zones("greater-manchester", geography = "msoa")
 names(zones)[1:20]
 names_to_plot = c("bicycle", "foot", "car_driver", "bus")
 plot(zones[names_to_plot] )
@@ -124,7 +126,7 @@ zone_centroids_chorlton = zone_centroids[chorlton_buffer, ]
 zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
 ```
 
-Let's plot the result, to get a handle on the level of walking and cycling in the area (see interactive version of this map [here](https://rpubs.com/RobinLovelace/772770)):
+Let's plot the result, to get a handle on the level of walking and cycling in the area (see interactive version of this map [here](https://rpubs.com/RobinLovelace/772770), shown are LSOA results):
 
 ```{r, eval=FALSE}
 tm_shape(zones) +
@@ -135,11 +137,42 @@ tm_shape(zones) +
 ![](https://i.imgur.com/oEuv1Zj.png)
 
 
-# Desire line data from the PCT
+# Desire line data from the pct package
 
 The maps shown in the previous section establish that there is a decent amount of cycling in the Chorlton area, at least according to the 2011 Census which is still a good proxy for travel patterns in 2021 due to the inertia of travel behaviours to change [@goodman_walking_2013].
 
+You can get national OD data from the Census into R with the following command:
 
+```{r}
+od_national = pct::get_od()
+od_national
+```
+
+Let's keep only OD data that have a start and end point in the study area:
+
+```{r}
+od = od_national %>% 
+  filter(geo_code1 %in% zones$geo_code) %>% 
+  filter(geo_code2 %in% zones$geo_code)
+dim(od)
+```
+
+The result is nearly 300 rows of data representing movement between origins and destinations.
+The data is non geographic, however.
+To convert this non-geographic data into geographic desire lines, you can use the `od_to_sf()` function in the `od` package as follows:
+
+```{r}
+desire_lines = od::od_to_sf(x = od, z = zones)
+```
+
+We can plot the result as follows:
+
+```{r}
+tmap_mode("plot")
+qtm(zones) +
+  tm_shape(desire_lines) +
+  tm_lines(c("foot", "bicycle"), palette = "Blues", style = "jenks", lwd = 3, alpha = 0.5)
+```
 
 
 # Crash data from stats19
