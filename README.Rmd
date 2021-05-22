@@ -68,6 +68,13 @@ You can load these packages one-by-one with `library(pct)`, or all at once as fo
 lapply(pkgs, library, character.only = TRUE)[length(pkgs)]
 ```
 
+One final line of code to set-up the environment is to switch `tmap` into 'view' mode to create interactive maps:
+
+```{r}
+tmap_mode("view")
+```
+
+
 
 # Defining the study area
 
