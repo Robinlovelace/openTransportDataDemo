@@ -60,7 +60,8 @@ pkgs = c(
   "osmextract",
   "tmap",
   "stplanr",
-  "od"
+  "od",
+  "dplyr"
 )
 ```
 
@@ -85,10 +86,18 @@ lapply(pkgs, library, character.only = TRUE)[length(pkgs)]
 #> 
 #>     od_id_character, od_id_max_min, od_id_order, od_id_szudzik,
 #>     od_oneway, od_to_odmatrix, odmatrix_to_od
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
 #> [[1]]
-#>  [1] "od"         "stplanr"    "tmap"       "osmextract" "stats19"   
-#>  [6] "pct"        "sf"         "stats"      "graphics"   "grDevices" 
-#> [11] "utils"      "datasets"   "methods"    "base"
+#>  [1] "dplyr"      "od"         "stplanr"    "tmap"       "osmextract"
+#>  [6] "stats19"    "pct"        "sf"         "stats"      "graphics"  
+#> [11] "grDevices"  "utils"      "datasets"   "methods"    "base"
 ```
 
 One final line of code to set-up the environment is to switch `tmap`
@@ -138,7 +147,8 @@ sf::st_write(chorlton_buffer, "chorlton_buffer.geojson")
 head(pct::pct_regions$region_name)
 #> [1] "london"                "greater-manchester"    "liverpool-city-region"
 #> [4] "south-yorkshire"       "north-east"            "west-midlands"
-zones = pct::get_pct_zones("greater-manchester")
+# zones = pct::get_pct_zones("greater-manchester") # for smaller LSOA zones
+zones = pct::get_pct_zones("greater-manchester", geography = "msoa")
 names(zones)[1:20]
 #>  [1] "geo_code"      "geo_name"      "lad11cd"       "lad_name"     
 #>  [5] "all"           "bicycle"       "foot"          "car_driver"   
@@ -169,7 +179,7 @@ zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
 
 Let’s plot the result, to get a handle on the level of walking and
 cycling in the area (see interactive version of this map
-[here](https://rpubs.com/RobinLovelace/772770)):
+[here](https://rpubs.com/RobinLovelace/772770), shown are LSOA results):
 
 ``` r
 tm_shape(zones) +
@@ -179,12 +189,100 @@ tm_shape(zones) +
 
 ![](https://i.imgur.com/oEuv1Zj.png)
 
-# Desire line data from the PCT
+# Desire line data from the pct package
 
 The maps shown in the previous section establish that there is a decent
 amount of cycling in the Chorlton area, at least according to the 2011
 Census which is still a good proxy for travel patterns in 2021 due to
 the inertia of travel behaviours to change (Goodman 2013).
+
+You can get national OD data from the Census into R with the following
+command:
+
+``` r
+od_national = pct::get_od()
+#> No region provided. Returning national OD data.
+#> 
+#> ── Column specification ────────────────────────────────────────────────────────
+#> cols(
+#>   `Area of residence` = col_character(),
+#>   `Area of workplace` = col_character(),
+#>   `All categories: Method of travel to work` = col_double(),
+#>   `Work mainly at or from home` = col_double(),
+#>   `Underground, metro, light rail, tram` = col_double(),
+#>   Train = col_double(),
+#>   `Bus, minibus or coach` = col_double(),
+#>   Taxi = col_double(),
+#>   `Motorcycle, scooter or moped` = col_double(),
+#>   `Driving a car or van` = col_double(),
+#>   `Passenger in a car or van` = col_double(),
+#>   Bicycle = col_double(),
+#>   `On foot` = col_double(),
+#>   `Other method of travel to work` = col_double()
+#> )
+#> 
+#> ── Column specification ────────────────────────────────────────────────────────
+#> cols(
+#>   MSOA11CD = col_character(),
+#>   MSOA11NM = col_character(),
+#>   BNGEAST = col_double(),
+#>   BNGNORTH = col_double(),
+#>   LONGITUDE = col_double(),
+#>   LATITUDE = col_double()
+#> )
+od_national
+#> # A tibble: 2,402,201 x 18
+#>    geo_code1 geo_code2   all from_home light_rail train   bus  taxi motorbike
+#>    <chr>     <chr>     <dbl>     <dbl>      <dbl> <dbl> <dbl> <dbl>     <dbl>
+#>  1 E02000001 E02000001  1506         0         73    41    32     9         1
+#>  2 E02000001 E02000014     2         0          2     0     0     0         0
+#>  3 E02000001 E02000016     3         0          1     0     2     0         0
+#>  4 E02000001 E02000025     1         0          0     1     0     0         0
+#>  5 E02000001 E02000028     1         0          0     0     0     0         0
+#>  6 E02000001 E02000051     1         0          1     0     0     0         0
+#>  7 E02000001 E02000053     2         0          2     0     0     0         0
+#>  8 E02000001 E02000057     1         0          1     0     0     0         0
+#>  9 E02000001 E02000058     1         0          0     0     0     0         0
+#> 10 E02000001 E02000059     1         0          0     0     0     1         0
+#> # … with 2,402,191 more rows, and 9 more variables: car_driver <dbl>,
+#> #   car_passenger <dbl>, bicycle <dbl>, foot <dbl>, other <dbl>,
+#> #   geo_name1 <chr>, geo_name2 <chr>, la_1 <chr>, la_2 <chr>
+```
+
+Let’s keep only OD data that have a start and end point in the study
+area:
+
+``` r
+od = od_national %>% 
+  filter(geo_code1 %in% zones$geo_code) %>% 
+  filter(geo_code2 %in% zones$geo_code)
+dim(od)
+#> [1] 286  18
+```
+
+The result is nearly 300 rows of data representing movement between
+origins and destinations. The data is non geographic, however. To
+convert this non-geographic data into geographic desire lines, you can
+use the `od_to_sf()` function in the `od` package as follows:
+
+``` r
+desire_lines = od::od_to_sf(x = od, z = zones)
+#> 0 origins with no match in zone ids
+#> 0 destinations with no match in zone ids
+#>  points not in od data removed.
+```
+
+We can plot the result as follows:
+
+``` r
+tmap_mode("plot")
+#> tmap mode set to plotting
+qtm(zones) +
+  tm_shape(desire_lines) +
+  tm_lines(c("foot", "bicycle"), palette = "Blues", style = "jenks", lwd = 3, alpha = 0.5)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 # Crash data from stats19
 
