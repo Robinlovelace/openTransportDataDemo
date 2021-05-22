@@ -178,13 +178,35 @@ qtm(zones) +
 # Crash data from stats19
 
 
-# Transport infrastructure data from osmextra
+# Transport infrastructure data from osmextract
+
+```{r, eval=FALSE}
+osm_data_full = osmextract::oe_get(zones)
+osm_data_region = osm_data_full[chorlton_buffer, , op = sf::st_within]
+
+q = "select * from multipolygons where building in ('house', 'residential', 'office', 'commercial', 'detached', 'yes')"
+osm_data_polygons = osmextract::oe_get(zones, query = q)
+osm_data_polygons_region = osm_data_polygons[chorlton_buffer, , op = sf::st_within]
+qtm(zones) +
+  qtm(osm_data_polygons_region)
+```
 
 
 # Scenarios of change
 
 # Preparing data for A/B Street
 
+```{r, eval=FALSE}
+remotes::install_github("a-b-street/abstr")
+
+ablines = abstr::ab_scenario(
+ houses = osm_data_polygons_region,
+ buildings = osm_data_polygons_region,
+ desire_lines = desire_lines,
+ zones = zones,
+ output_format = "sf"
+)
+```
 
 
 # References
