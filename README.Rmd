@@ -86,11 +86,11 @@ We will therefore select an area containing Chorlton and enough of the surroundi
 As a starting point, we will use a 2 km buffer around the straight line between Chorlton and Manchester city centre to capture movement along this transport corridor:
 
 ```{r}
-chorlton_point = tmaptools::geocode_OSM("chorlton")
+chorlton_point = tmaptools::geocode_OSM("chorlton, manchester")
 manchester_point = tmaptools::geocode_OSM("manchester")
 c_m_coordiantes = rbind(chorlton_point$coords, manchester_point$coords)
 c_m_od = od::points_to_od(p = c_m_coordiantes, interzone_only = TRUE)
-c_m_desire_line = od::odc_to_sf(c_m_od)[1, ]
+c_m_desire_line = od::odc_to_sf(c_m_od[-(1:2)])[1, ]
 c_m_buffer = stplanr::geo_buffer(c_m_desire_line, dist = 2000)
 qtm(c_m_buffer)
 ```
