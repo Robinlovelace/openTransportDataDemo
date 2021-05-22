@@ -168,7 +168,8 @@ zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
 ```
 
 Let’s plot the result, to get a handle on the level of walking and
-cycling in the area:
+cycling in the area (see interactive version of this map
+[here](https://rpubs.com/RobinLovelace/772770)):
 
 ``` r
 tm_shape(zones) +
@@ -179,6 +180,11 @@ tm_shape(zones) +
 ![](https://i.imgur.com/oEuv1Zj.png)
 
 # Desire line data from the PCT
+
+The maps shown in the previous section establish that there is a decent
+amount of cycling in the Chorlton area, at least according to the 2011
+Census which is still a good proxy for travel patterns in 2021 due to
+the inertia of travel behaviours to change (Goodman 2013).
 
 # Crash data from stats19
 
@@ -191,6 +197,15 @@ tm_shape(zones) +
 # References
 
 <div id="refs" class="references csl-bib-body hanging-indent">
+
+<div id="ref-goodman_walking_2013" class="csl-entry">
+
+Goodman, Anna. 2013. “Walking, Cycling and Driving to Work in the
+English and Welsh 2011 Census: Trends, Socio-Economic Patterning and
+Relevance to Travel Behaviour in General.” Edited by Harry Zhang. *PLoS
+ONE* 8 (8): e71790. <https://doi.org/10.1371/journal.pone.0071790>.
+
+</div>
 
 <div id="ref-lovelace_reproducible_2020" class="csl-entry">
 
