@@ -75,7 +75,6 @@ tmap_mode("view")
 ```
 
 
-
 # Defining the study area
 
 The first stage in many projects involving geographic data is defining the study area.
@@ -120,11 +119,13 @@ zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
 
 Let's plot the result, to get a handle on the level of walking and cycling in the area:
 
-```{r}
+```{r, eval=FALSE}
 tm_shape(zones) +
   tm_fill(c("foot", "bicycle"), palette = "viridis") +
   tm_shape(chorlton_buffer) + tm_borders(lwd = 3)
 ```
+
+![](https://i.imgur.com/oEuv1Zj.png)
 
 
 
