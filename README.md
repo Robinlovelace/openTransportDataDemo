@@ -37,7 +37,7 @@ VSCode).
 
 If you’re new to R, it may be worth reading up on introductory material
 such as the free and open source resource *Reproducible Road Safety with
-R* (**lovelace\_reproducible\_2020?**) tutorial. See [Section
+R* (Lovelace 2020) tutorial. See [Section
 1.5](https://itsleeds.github.io/rrsrr/introduction.html#installing-r-and-rstudio)
 of that tutorial to install R/RStudio and [Section
 3](https://itsleeds.github.io/rrsrr/rstudio.html) on getting started
@@ -57,7 +57,8 @@ commands into the R console:
 pkgs = c(
   "pct",
   "stats19",
-  "osmextract"
+  "osmextract",
+  "tmap"
 )
 ```
 
@@ -68,6 +69,8 @@ install.packages(pkgs)
 ```
 
 We will load the packages as we use them.
+
+# Defining the study area
 
 # Zone data from the PCT
 
@@ -99,3 +102,15 @@ plot(zones[names_to_plot] )
 # Preparing data for A/B Street
 
 # References
+
+<div id="refs" class="references csl-bib-body hanging-indent">
+
+<div id="ref-lovelace_reproducible_2020" class="csl-entry">
+
+Lovelace, Robin. 2020. “Reproducible Road Safety Research with R.” Royal
+Automotive Club Foundation.
+<https://www.racfoundation.org/wp-content/uploads/Reproducible_road_safety_research_with_R_Lovelace_December_2020.pdf>.
+
+</div>
+
+</div>
