@@ -44,6 +44,12 @@ pkgs = c(
 )
 ```
 
+You can install these packages as follows:
+
+``` r
+install.packages(pkgs)
+```
+
 We will load the packages as we use them.
 
 # Zone data from the PCT
@@ -63,7 +69,7 @@ names_to_plot = c("bicycle", "foot", "car_driver", "bus")
 plot(zones[names_to_plot] )
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 # Desire line data from the PCT
 
