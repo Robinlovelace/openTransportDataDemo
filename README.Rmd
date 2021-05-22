@@ -45,7 +45,7 @@ If you have R installed, you should be able to run all the code in this example 
 
 The first step is to install some packages, by entering the following commands into the R console:
 
-```{r, eval=FALSE}
+```{r}
 pkgs = c(
   "pct",
   "stats19",
