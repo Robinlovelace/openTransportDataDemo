@@ -60,8 +60,9 @@ You can install these packages as follows:
 install.packages(pkgs)
 ```
 
-
 We will load the packages as we use them.
+
+# Defining the study area
 
 # Zone data from the PCT
 
