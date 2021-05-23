@@ -16,17 +16,17 @@ wanting to get, analyse and model transport data with open source
 software for transparent and evidence-based decision-making.
 
 The amount of open data on transport systems can be overwhelming,
-especially when much of it is hard to download, let alone visualise and
-model and edit. In this talk I will talk about tools that can help with
-accessing open transport data to support you to generate new evidence
-and analysis in support of positive changes on vital travel networks in
-Chorlton and beyond. I will show how to download and work with data on
-road networks, road traffic casualties, and travel behaviour in R, a
-statistical programming language with outstanding visualisation,
-geographic analysis and statistical modelling capabilities. No need to
-‘live code’ during the session: all the scripts to reproduce the outputs
-from the presentations will be provided in the open to support
-collaborative transport planning research.
+especially when much of it is hard to download, let alone visualise,
+model and edit. In this talk, I will introduce tools that can help with
+using open transport data to generate new evidence and analysis in
+support of positive changes on vital travel networks in Chorlton and
+beyond. I will show how to download and work with data on road networks,
+road traffic casualties, and travel behaviour in R, a statistical
+programming language with outstanding visualisation, geographic analysis
+and statistical modelling capabilities. No need to ‘live code’ during
+the session: all the scripts to reproduce the outputs from the
+presentations will be provided in the open to support collaborative
+transport planning research.
 
 # Set-up
 
@@ -143,6 +143,8 @@ sf::st_write(chorlton_buffer, "chorlton_buffer.geojson")
 
 # Zone data from the PCT
 
+TODO: Introduce what this section is doing? What’s the PCT?
+
 ``` r
 head(pct::pct_regions$region_name)
 #> [1] "london"                "greater-manchester"    "liverpool-city-region"
@@ -196,8 +198,8 @@ amount of cycling in the Chorlton area, at least according to the 2011
 Census which is still a good proxy for travel patterns in 2021 due to
 the inertia of travel behaviours to change (Goodman 2013).
 
-You can get national OD data from the Census into R with the following
-command:
+You can get national OD (origin/destination, also called desire line)
+data from the Census into R with the following command:
 
 ``` r
 od_national = pct::get_od()
@@ -250,7 +252,8 @@ od_national
 ```
 
 Let’s keep only OD data that have a start and end point in the study
-area:
+area (in a transport simulation, we may also want trips starting or
+ending outside this area and passing through):
 
 ``` r
 od = od_national %>% 
@@ -261,9 +264,10 @@ dim(od)
 ```
 
 The result is nearly 300 rows of data representing movement between
-origins and destinations. The data is non geographic, however. To
-convert this non-geographic data into geographic desire lines, you can
-use the `od_to_sf()` function in the `od` package as follows:
+origin and destination zone centroids. The data is non geographic,
+however. To convert this non-geographic data into geographic desire
+lines, you can use the `od_to_sf()` function in the `od` package as
+follows:
 
 ``` r
 desire_lines = od::od_to_sf(x = od, z = zones)
@@ -284,13 +288,39 @@ qtm(zones) +
 
 ![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
+Note the OD data describes an aggregate pattern, between pairs of zones
+– not between individual points-of-interest.
+
 # Crash data from stats19
 
-# Transport infrastructure data from osmextra
+# Transport infrastructure data from osmextract
+
+``` r
+osm_data_full = osmextract::oe_get(zones)
+osm_data_region = osm_data_full[chorlton_buffer, , op = sf::st_within]
+
+q = "select * from multipolygons where building in ('house', 'residential', 'office', 'commercial', 'detached', 'yes')"
+osm_data_polygons = osmextract::oe_get(zones, query = q)
+osm_data_polygons_region = osm_data_polygons[chorlton_buffer, , op = sf::st_within]
+qtm(zones) +
+  qtm(osm_data_polygons_region)
+```
 
 # Scenarios of change
 
 # Preparing data for A/B Street
+
+``` r
+remotes::install_github("a-b-street/abstr")
+
+ablines = abstr::ab_scenario(
+ houses = osm_data_polygons_region,
+ buildings = osm_data_polygons_region,
+ desire_lines = desire_lines,
+ zones = zones,
+ output_format = "sf"
+)
+```
 
 # References
 
