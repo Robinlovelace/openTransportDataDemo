@@ -199,7 +199,11 @@ qtm(zones) +
 ```{r, eval=FALSE}
 remotes::install_github("a-b-street/abstr")
 
-ablines = abstr::ab_scenario(
+# manual edit and debug
+# file.edit("~/orgs/a-b-street/abstr/R/ab_scenario.R")
+
+ablines = ab_scenario(
+# ablines = abstr::ab_scenario(
  houses = osm_data_polygons_region,
  buildings = osm_data_polygons_region,
  desire_lines = desire_lines,
