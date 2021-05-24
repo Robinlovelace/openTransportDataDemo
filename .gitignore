@@ -6,3 +6,4 @@
 data-raw/
 *.html
 *.json
+*cache*

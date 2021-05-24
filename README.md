@@ -364,6 +364,7 @@ desire_lines_abst = desire_lines %>%
          Transit = light_rail + train + bus)
 
 
+set.seed(2050)
 desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
                                                   subpoints = osm_data_polygons_region)
 #> Warning in st_centroid.sf(subpoints): st_centroid assumes attributes are
@@ -376,7 +377,6 @@ desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones
 #>  points not in od data removed.
 
 desire_lines_disaggregated %>% 
- sample_n(1000) %>% 
  tm_shape() +
   tm_lines("mode") +
   qtm(osm_data_polygons_region)
@@ -391,6 +391,7 @@ desire_lines_abst = desire_lines_go_active %>%
   transmute(o = geo_code1, d = geo_code2, all, Walk = foot, Bike = bicycle, Drive = car_driver,
          Transit = light_rail + train + bus)
 
+set.seed(2050)
 desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
                                                   subpoints = osm_data_polygons_region)
 #> Warning in st_centroid.sf(subpoints): st_centroid assumes attributes are
@@ -403,7 +404,6 @@ desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones
 #>  points not in od data removed.
 
 desire_lines_disaggregated %>% 
- sample_n(1000) %>% 
  tm_shape() +
   tm_lines("mode") +
   qtm(osm_data_polygons_region)

@@ -10,7 +10,8 @@ bibliography: references.bib
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  echo = TRUE
+  echo = TRUE,
+  cache = TRUE
 )
 library(sf)
 ```
@@ -245,11 +246,11 @@ desire_lines_abst = desire_lines %>%
          Transit = light_rail + train + bus)
 
 
+set.seed(2050)
 desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
                                                   subpoints = osm_data_polygons_region)
 
 desire_lines_disaggregated %>% 
- sample_n(1000) %>% 
  tm_shape() +
   tm_lines("mode") +
   qtm(osm_data_polygons_region)
@@ -264,11 +265,11 @@ desire_lines_abst = desire_lines_go_active %>%
   transmute(o = geo_code1, d = geo_code2, all, Walk = foot, Bike = bicycle, Drive = car_driver,
          Transit = light_rail + train + bus)
 
+set.seed(2050)
 desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
                                                   subpoints = osm_data_polygons_region)
 
 desire_lines_disaggregated %>% 
- sample_n(1000) %>% 
  tm_shape() +
   tm_lines("mode") +
   qtm(osm_data_polygons_region)
