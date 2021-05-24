@@ -5,3 +5,4 @@
 *.Rds
 data-raw/
 *.html
+*.json

@@ -177,6 +177,7 @@ zone_centroids_chorlton = zone_centroids[chorlton_buffer, ]
 #> although coordinates are longitude/latitude, st_intersects assumes that they are planar
 #> although coordinates are longitude/latitude, st_intersects assumes that they are planar
 zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
+saveRDS(zones, "zones.Rds")
 ```
 
 Let’s plot the result, to get a handle on the level of walking and
@@ -276,6 +277,15 @@ desire_lines = od::od_to_sf(x = od, z = zones)
 #>  points not in od data removed.
 ```
 
+We’ll calculated the straight line distance of these trips as follows:
+
+``` r
+desire_lines$length_km = as.numeric(sf::st_length(desire_lines)) / 1000
+summary(desire_lines$length_km)
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>   0.000   1.676   2.523   2.719   3.699   6.707
+```
+
 We can plot the result as follows:
 
 ``` r
@@ -286,41 +296,124 @@ qtm(zones) +
   tm_lines(c("foot", "bicycle"), palette = "Blues", style = "jenks", lwd = 3, alpha = 0.5)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 Note the OD data describes an aggregate pattern, between pairs of zones
 – not between individual points-of-interest.
+
+The following code returns only OD pairs with an origin in the Chorlton
+area:
+
+``` r
+od_chorlton = od %>% 
+  filter(geo_code1 %in% "E02001073")
+```
 
 # Crash data from stats19
 
 # Transport infrastructure data from osmextract
 
 ``` r
-osm_data_full = osmextract::oe_get(zones)
-osm_data_region = osm_data_full[chorlton_buffer, , op = sf::st_within]
+# osm_data_full = osmextract::oe_get(zones)
+# osm_data_region = osm_data_full[chorlton_buffer, , op = sf::st_within]
 
 q = "select * from multipolygons where building in ('house', 'residential', 'office', 'commercial', 'detached', 'yes')"
 osm_data_polygons = osmextract::oe_get(zones, query = q)
 osm_data_polygons_region = osm_data_polygons[chorlton_buffer, , op = sf::st_within]
 qtm(zones) +
   qtm(osm_data_polygons_region)
+saveRDS(osm_data_polygons_region, "osm_data_polygons_region.Rds")
 ```
 
 # Scenarios of change
 
+``` r
+desire_lines_go_active = desire_lines %>% 
+  mutate(car_driver = case_when(length_km < 2 ~ car_driver * 0.33, TRUE ~ car_driver)) %>% 
+  mutate(foot = case_when(length_km < 2 ~ foot + car_driver * (1 - 0.33), TRUE ~ foot)) %>% 
+  mutate(car_driver = car_driver * 0.5, bicycle = bicycle + car_driver * 0.5) %>% 
+  mutate_if(is.numeric, round)
+sum(desire_lines_go_active$bicycle)
+#> [1] 2777
+sum(desire_lines$bicycle)
+#> [1] 1717
+sum(desire_lines_go_active$foot)
+#> [1] 13212
+sum(desire_lines$foot)
+#> [1] 12625
+```
+
 # Preparing data for A/B Street
 
 ``` r
-remotes::install_github("a-b-street/abstr")
+remotes::install_github("a-b-street/abstr", ref = "ab_scenario2")
+#> Using github PAT from envvar GITHUB_PAT
+#> Skipping install of 'abstr' from a github remote, the SHA1 (651fb616) has not changed since last install.
+#>   Use `force = TRUE` to force installation
+u = "https://github.com/Robinlovelace/openTransportDataDemo/releases/download/1/osm_data_polygons_region.Rds"
+f = basename(u)
+if(!file.exists(f)) {
+  download.file(url = u, destfile = f)
+}
+osm_data_polygons_region = readRDS("osm_data_polygons_region.Rds")
+# Explore inputs and outputs of ab_scenario fun
 
-ablines = abstr::ab_scenario(
- houses = osm_data_polygons_region,
- buildings = osm_data_polygons_region,
- desire_lines = desire_lines,
- zones = zones,
- output_format = "sf"
-)
+desire_lines_abst = desire_lines %>% 
+  filter(geo_code1 == "E02001073") %>% 
+  transmute(o = geo_code1, d = geo_code2, all, Walk = foot, Bike = bicycle, Drive = car_driver,
+         Transit = light_rail + train + bus)
+
+
+desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
+                                                  subpoints = osm_data_polygons_region)
+#> Warning in st_centroid.sf(subpoints): st_centroid assumes attributes are
+#> constant over geometries of x
+#> Warning in st_centroid.sfc(st_geometry(x), of_largest_polygon =
+#> of_largest_polygon): st_centroid does not give correct centroids for longitude/
+#> latitude data
+#> 0 origins with no match in zone ids
+#> 0 destinations with no match in zone ids
+#>  points not in od data removed.
+
+desire_lines_disaggregated %>% 
+ sample_n(1000) %>% 
+ tm_shape() +
+  tm_lines("mode") +
+  qtm(osm_data_polygons_region)
+
+desire_lines_json = abstr::ab_json(desire_lines_disaggregated["mode"], scenario_name = "baseline")
+
+abstr::ab_save(x = desire_lines_json, "baseline.json")
+
+# Go Active scenario
+desire_lines_abst = desire_lines_go_active %>% 
+  filter(geo_code1 == "E02001073") %>% 
+  transmute(o = geo_code1, d = geo_code2, all, Walk = foot, Bike = bicycle, Drive = car_driver,
+         Transit = light_rail + train + bus)
+
+desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
+                                                  subpoints = osm_data_polygons_region)
+#> Warning in st_centroid.sf(subpoints): st_centroid assumes attributes are
+#> constant over geometries of x
+
+#> Warning in st_centroid.sf(subpoints): st_centroid does not give correct
+#> centroids for longitude/latitude data
+#> 0 origins with no match in zone ids
+#> 0 destinations with no match in zone ids
+#>  points not in od data removed.
+
+desire_lines_disaggregated %>% 
+ sample_n(1000) %>% 
+ tm_shape() +
+  tm_lines("mode") +
+  qtm(osm_data_polygons_region)
+
+desire_lines_json = abstr::ab_json(desire_lines_disaggregated["mode"], scenario_name = "go_active")
+
+abstr::ab_save(x = desire_lines_json, "go_active.json")
 ```
+
+<img src="README_files/figure-gfm/unnamed-chunk-21-1.png" width="49%" /><img src="README_files/figure-gfm/unnamed-chunk-21-2.png" width="49%" />
 
 # References
 

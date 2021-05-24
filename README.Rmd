@@ -126,6 +126,7 @@ To keep only zones whose centroids lie inside the study area we can use the foll
 zone_centroids = sf::st_centroid(zones)
 zone_centroids_chorlton = zone_centroids[chorlton_buffer, ]
 zones = zones[zones$geo_code %in% zone_centroids_chorlton$geo_code, ]
+saveRDS(zones, "zones.Rds")
 ```
 
 Let's plot the result, to get a handle on the level of walking and cycling in the area (see interactive version of this map [here](https://rpubs.com/RobinLovelace/772770), shown are LSOA results):
@@ -167,6 +168,14 @@ To convert this non-geographic data into geographic desire lines, you can use th
 desire_lines = od::od_to_sf(x = od, z = zones)
 ```
 
+We'll calculated the straight line distance of these trips as follows:
+
+```{r}
+desire_lines$length_km = as.numeric(sf::st_length(desire_lines)) / 1000
+summary(desire_lines$length_km)
+```
+
+
 We can plot the result as follows:
 
 ```{r}
@@ -178,41 +187,135 @@ qtm(zones) +
 
 Note the OD data describes an aggregate pattern, between pairs of zones -- not between individual points-of-interest.
 
+The following code returns only OD pairs with an origin in the Chorlton area:
+
+```{r}
+od_chorlton = od %>% 
+  filter(geo_code1 %in% "E02001073")
+```
+
+
 # Crash data from stats19
 
 
 # Transport infrastructure data from osmextract
 
 ```{r, eval=FALSE}
-osm_data_full = osmextract::oe_get(zones)
-osm_data_region = osm_data_full[chorlton_buffer, , op = sf::st_within]
+# osm_data_full = osmextract::oe_get(zones)
+# osm_data_region = osm_data_full[chorlton_buffer, , op = sf::st_within]
 
 q = "select * from multipolygons where building in ('house', 'residential', 'office', 'commercial', 'detached', 'yes')"
 osm_data_polygons = osmextract::oe_get(zones, query = q)
 osm_data_polygons_region = osm_data_polygons[chorlton_buffer, , op = sf::st_within]
 qtm(zones) +
   qtm(osm_data_polygons_region)
+saveRDS(osm_data_polygons_region, "osm_data_polygons_region.Rds")
 ```
-
 
 # Scenarios of change
 
+```{r}
+desire_lines_go_active = desire_lines %>% 
+  mutate(car_driver = case_when(length_km < 2 ~ car_driver * 0.33, TRUE ~ car_driver)) %>% 
+  mutate(foot = case_when(length_km < 2 ~ foot + car_driver * (1 - 0.33), TRUE ~ foot)) %>% 
+  mutate(car_driver = car_driver * 0.5, bicycle = bicycle + car_driver * 0.5) %>% 
+  mutate_if(is.numeric, round)
+sum(desire_lines_go_active$bicycle)
+sum(desire_lines$bicycle)
+sum(desire_lines_go_active$foot)
+sum(desire_lines$foot)
+```
+
+
 # Preparing data for A/B Street
 
-```{r, eval=FALSE}
-remotes::install_github("a-b-street/abstr")
+```{r, fig.show='hold', out.width="49%"}
+remotes::install_github("a-b-street/abstr", ref = "ab_scenario2")
+u = "https://github.com/Robinlovelace/openTransportDataDemo/releases/download/1/osm_data_polygons_region.Rds"
+f = basename(u)
+if(!file.exists(f)) {
+  download.file(url = u, destfile = f)
+}
+osm_data_polygons_region = readRDS("osm_data_polygons_region.Rds")
+# Explore inputs and outputs of ab_scenario fun
 
-# manual edit and debug
-# file.edit("~/orgs/a-b-street/abstr/R/ab_scenario.R")
+desire_lines_abst = desire_lines %>% 
+  filter(geo_code1 == "E02001073") %>% 
+  transmute(o = geo_code1, d = geo_code2, all, Walk = foot, Bike = bicycle, Drive = car_driver,
+         Transit = light_rail + train + bus)
 
-ablines = ab_scenario(
-# ablines = abstr::ab_scenario(
- houses = osm_data_polygons_region,
- buildings = osm_data_polygons_region,
- desire_lines = desire_lines,
- zones = zones,
- output_format = "sf"
+
+desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
+                                                  subpoints = osm_data_polygons_region)
+
+desire_lines_disaggregated %>% 
+ sample_n(1000) %>% 
+ tm_shape() +
+  tm_lines("mode") +
+  qtm(osm_data_polygons_region)
+
+desire_lines_json = abstr::ab_json(desire_lines_disaggregated["mode"], scenario_name = "baseline")
+
+abstr::ab_save(x = desire_lines_json, "baseline.json")
+
+# Go Active scenario
+desire_lines_abst = desire_lines_go_active %>% 
+  filter(geo_code1 == "E02001073") %>% 
+  transmute(o = geo_code1, d = geo_code2, all, Walk = foot, Bike = bicycle, Drive = car_driver,
+         Transit = light_rail + train + bus)
+
+desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones,
+                                                  subpoints = osm_data_polygons_region)
+
+desire_lines_disaggregated %>% 
+ sample_n(1000) %>% 
+ tm_shape() +
+  tm_lines("mode") +
+  qtm(osm_data_polygons_region)
+
+desire_lines_json = abstr::ab_json(desire_lines_disaggregated["mode"], scenario_name = "go_active")
+
+abstr::ab_save(x = desire_lines_json, "go_active.json")
+```
+
+
+```{r, eval=FALSE, echo=FALSE}
+piggyback::pb_upload("go_active.json")
+piggyback::pb_download_url("go_active.json")
+fs::file_size("baseline.json")
+# Explore inputs and outputs of ab_scenario fun
+desire_lines_disaggregated = abstr::ab_scenario(desire_lines_abst, zones = zones)
+piggyback::pb_upload("osm_data_polygons_region.Rds")
+piggyback::pb_download_url("osm_data_polygons_region.Rds")
+
+desire_lines_json = ab_json(desire_lines_disaggregated["mode"], scenario_name = "baseline")
+ab_save(x = desire_lines_json, "baseline.json")
+fs::file_size("baseline.json")
+
+library(abstr)
+?ab_scenario
+ab_evening_dutch = ab_scenario2(
+  leeds_houses,
+  leeds_buildings,
+  leeds_desire_lines,
+  leeds_zones,
+  scenario = "dutch",
+  output_format = "sf",
+  hr = 20, # representing 8 pm
+  sd = 0
 )
+head(leeds_desire_lines)
+head(ab_evening_dutch) # output is simple: sf object with `mode` column.
+nrow(ab_evening_dutch)
+sum(leeds_desire_lines$all_base)
+
+# issue to fix here: 
+zones = zones %>% 
+  filter(geo_name %in% c(desire_lines$geo_code1, desire_lines$geo_code2))
+
+
+desire_lines_json = ab_json(desire_lines_disaggregated["mode"], scenario_name = "baseline")
+
 ```
 
 
