@@ -422,19 +422,21 @@ sum(desire_lines$foot)
 remotes::install_github("a-b-street/abstr", ref = "ab_scenario2")
 #> Using github PAT from envvar GITHUB_PAT
 #> Downloading GitHub repo a-b-street/abstr@ab_scenario2
-#> fansi (0.4.2 -> 0.5.0) [CRAN]
-#> Installing 1 packages: fansi
-#> Installing package into '/home/robin/R/x86_64-pc-linux-gnu-library/4.0'
+#> tidyr (NA -> 1.1.3) [CRAN]
+#> Installing 1 packages: tidyr
+#> Installing package into '/Users/runner/work/_temp/Library'
 #> (as 'lib' is unspecified)
-#>      checking for file ‘/tmp/Rtmp9kmcOM/remotesf1af43e80b567/a-b-street-abstr-776df64/DESCRIPTION’ ...  ✔  checking for file ‘/tmp/Rtmp9kmcOM/remotesf1af43e80b567/a-b-street-abstr-776df64/DESCRIPTION’
-#>   ─  preparing ‘abstr’:
-#>    checking DESCRIPTION meta-information ...  ✔  checking DESCRIPTION meta-information
-#>   ─  checking for LF line-endings in source and make files and shell scripts
-#>   ─  checking for empty or unneeded directories
-#>   ─  building ‘abstr_0.2.0.tar.gz’
-#>      
 #> 
-#> Installing package into '/home/robin/R/x86_64-pc-linux-gnu-library/4.0'
+#> The downloaded binary packages are in
+#>  /var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T//Rtmp24vB1x/downloaded_packages
+#> Running `R CMD build`...
+#> * checking for file ‘/private/var/folders/24/8k48jl6d249_n_qfxwsl6xvm0000gn/T/Rtmp24vB1x/remotes10717af98f2a/a-b-street-abstr-776df64/DESCRIPTION’ ... OK
+#> * preparing ‘abstr’:
+#> * checking DESCRIPTION meta-information ... OK
+#> * checking for LF line-endings in source and make files and shell scripts
+#> * checking for empty or unneeded directories
+#> * building ‘abstr_0.2.0.tar.gz’
+#> Installing package into '/Users/runner/work/_temp/Library'
 #> (as 'lib' is unspecified)
 u = "https://github.com/Robinlovelace/openTransportDataDemo/releases/download/1/osm_data_polygons_region.Rds"
 f = basename(u)
